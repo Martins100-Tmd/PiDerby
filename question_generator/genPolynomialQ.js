@@ -1,7 +1,9 @@
+import { PWD } from "../pwd";
+
 async function quadraticEquation(equation) {
     try {
         const params = new URLSearchParams({
-            appid: 'KL3KP5XVR6',
+            appid: PWD,
             input: `solve (${equation})`,
             includepodid: 'Result',
             output: 'json'
@@ -19,7 +21,7 @@ async function quadraticEquation(equation) {
             .map(sp => sp.plaintext)
             .filter(Boolean)
             .join(' | ');
-	    console.log(rawText);
+        console.log(rawText);
         return { raw: rawText, roots: parseRoots(rawText) };
     } catch (error) {
         return { raw: `Error: ${error.message}`, roots: [] };
@@ -165,8 +167,8 @@ function estimateDifficulty(degree, roots, coeffs) {
 }
 
 
-const randomDegree = Math.floor(Math.random()*4)+1;
-const question = generatePolynomial({allowFractionalRoots: true, degree: randomDegree});
+const randomDegree = Math.floor(Math.random() * 4) + 1;
+const question = generatePolynomial({ allowFractionalRoots: true, degree: randomDegree });
 console.log(question.template_expr);
 console.time();
 const answer = await quadraticEquation(question.template_expr);
