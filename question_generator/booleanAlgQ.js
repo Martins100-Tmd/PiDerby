@@ -1,6 +1,4 @@
-const VARS = ['A', 'B', 'C', 'D']; // up to 4 variables
-
-// ---------- 1. Random expression tree (with enforced minimum depth) ----------
+const VARS = ['A', 'B', 'C', 'D'];
 
 function buildRandomExpression(numVars, minDepth = 2, maxDepth = 4) {
     const varsInUse = VARS.slice(0, numVars);
@@ -8,9 +6,6 @@ function buildRandomExpression(numVars, minDepth = 2, maxDepth = 4) {
     function build(depth) {
         const mustRecurse = depth < minDepth;
         const canRecurse = depth < maxDepth;
-
-        // Leaf probability is 0 below minDepth, then ramps up toward maxDepth
-        // so trees have real structure but don't max out every time.
         const leafChance = mustRecurse ? 0 : 0.25 + (depth - minDepth) * 0.2;
 
         if (!canRecurse || Math.random() < leafChance) {
@@ -19,8 +14,6 @@ function buildRandomExpression(numVars, minDepth = 2, maxDepth = 4) {
                 ? { type: 'not', child: { type: 'var', name } }
                 : { type: 'var', name };
         }
-
-        // Operators limited to: AND (^), OR (v), IMPLIES (=>), IFF (<=>)
         const opRoll = Math.random();
         const op = opRoll < 0.35 ? 'and'
                   : opRoll < 0.65 ? 'or'
@@ -36,8 +29,6 @@ function buildRandomExpression(numVars, minDepth = 2, maxDepth = 4) {
 
     return build(0);
 }
-
-// ---------- 2. Exact evaluation — this IS the ground truth, no external solver needed ----------
 
 function evaluateExpr(node, assignment) {
     switch (node.type) {
@@ -62,12 +53,6 @@ function buildTruthTable(node, numVars) {
     }
     return rows;
 }
-
-// ---------- 3. Minimal form via Quine–McCluskey (ground truth for "simplify" questions) ----------
-// Minimization always targets minimal SOP using AND (^) / OR (v) — that's what
-// a minimal form IS, regardless of which operators appeared in the original
-// generated expression (=> and <=> get reduced away here, same as XOR would).
-
 function minimize(truthTable, numVars) {
     const minterms = truthTable
         .map((row, i) => ({ i, output: row.output }))
@@ -109,8 +94,7 @@ function minimize(truthTable, numVars) {
         groups = dedupe(nextGroups);
     }
     primeImplicants.push(...groups);
-
-    // Essential prime implicant selection (greedy — fine at 2-4 variable scale)
+    
     const uncovered = new Set(minterms);
     const chosen = [];
     while (uncovered.size > 0) {
@@ -129,7 +113,7 @@ function diffOneBit(a, b) {
     let diffIdx = null, diffCount = 0;
     for (let k = 0; k < a.length; k++) {
         if (a[k] !== b[k]) {
-            if (a[k] === '-' || b[k] === '-') return null; // dash positions must match
+            if (a[k] === '-' || b[k] === '-') return null;
             diffCount++; diffIdx = k;
         }
     }
@@ -152,8 +136,6 @@ function termToString(bits, numVars) {
     return term || 'true';
 }
 
-// ---------- 4. Display formatting ----------
-
 function exprToString(node) {
     switch (node.type) {
         case 'var': return node.name;
@@ -169,11 +151,9 @@ function boolToWord(b) {
     return b ? 'true' : 'false';
 }
 
-// ---------- 5. Public generator ----------
-
 function generateBooleanQuestion({
     numVars = 3,
-    questionType = 'simplify', // 'simplify' | 'evaluate'
+    questionType = 'simplify',
     minDepth = 2,
     maxDepth = 4
 } = {}) {
@@ -199,8 +179,8 @@ function generateBooleanQuestion({
     return {
         questionType,
         prompt: `Simplify: ${exprToString(expr)}`,
-        correct_answer: simplified,       // e.g. "AC v ¬B", or "true"/"false"
-        truth_table: truthTable,          // for equivalence-checking a differently-formatted user answer
+        correct_answer: simplified,
+        truth_table: truthTable,       
         difficulty_hint: estimateDifficulty(expr, numVars)
     };
 }
@@ -216,7 +196,3 @@ function exprDepth(node) {
     if (node.type === 'not') return 1 + exprDepth(node.child);
     return 1 + Math.max(exprDepth(node.left), exprDepth(node.right));
 }
-
-// Examples
-console.log(JSON.stringify(generateBooleanQuestion({ numVars: 3, questionType: 'evaluate' }), null, 2));
-//console.log(JSON.stringify(generateBooleanQuestion({ numVars: 3, questionType: 'simplify' }), null, 2));
