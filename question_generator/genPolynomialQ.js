@@ -60,13 +60,13 @@ function parseRoots(text) {
  * by constructing it from its factors rather than solving for random coefficients.
  *
  * @param {Object} options
- * @param {number} options.degree - 1 to 4
- * @param {number} options.minRoot - smallest possible root numerator
- * @param {number} options.maxRoot - largest possible root numerator
- * @param {boolean} options.allowFractionalRoots - roots like 3/2, not just integers
- * @param {boolean} options.allowRepeatedRoots - allow duplicate roots (multiplicity > 1)
- * @param {number} options.maxScale - random overall multiplier for variety (keeps coefficients from always having gcd 1)
- */
+ * @param {number} options.degree 
+ * @param {number} options.minRoot
+ * @param {number} options.maxRoot
+ * @param {boolean} options.allowFractionalRoots
+ * @param {boolean} options.allowRepeatedRoots
+ * @param {number} options.maxScale
+ * */
 function generatePolynomial({
     degree = 2,
     minRoot = -6,
@@ -78,12 +78,10 @@ function generatePolynomial({
     if (degree < 1 || degree > 4) throw new Error('degree must be between 1 and 4');
 
     const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-    // 1. Pick `degree` roots, each as an exact fraction num/denom
-    const roots = []; // { num, denom }
+    const roots = [];
     for (let i = 0; i < degree; i++) {
         if (allowRepeatedRoots && roots.length > 0 && Math.random() < 0.25) {
-            roots.push({ ...roots[randInt(0, roots.length - 1)] }); // duplicate an existing root
+            roots.push({ ...roots[randInt(0, roots.length - 1)] });
             continue;
         }
         let denom = 1;
@@ -97,14 +95,11 @@ function generatePolynomial({
         roots.push({ num, denom });
     }
 
-    // 2. Build integer-coefficient polynomial by multiplying factors (denom*x - num)
-    // Coeffs stored ascending: coeffs[0] is constant term, coeffs[n] is x^n term
-    let coeffs = [1]; // start with polynomial "1"
+    let coeffs = [1];
     for (const { num, denom } of roots) {
-        coeffs = multiplyPoly(coeffs, [-num, denom]); // (denom*x - num)
+        coeffs = multiplyPoly(coeffs, [-num, denom]);
     }
 
-    // 3. Apply a random overall scale for variety
     const scale = randInt(1, maxScale);
     coeffs = coeffs.map(c => c * scale);
 
@@ -113,14 +108,13 @@ function generatePolynomial({
     return {
         template_expr: buildExprString(coeffs),
         degree,
-        coefficients: coeffs.slice().reverse(), // descending, e.g. [a4,a3,a2,a1,a0]
+        coefficients: coeffs.slice().reverse(),
         roots: exactRoots,
         accepted_forms: buildAcceptedForms(exactRoots),
         difficulty_hint: estimateDifficulty(degree, roots, coeffs)
     };
 }
 
-// Multiplies two polynomials given as ascending coefficient arrays
 function multiplyPoly(p1, p2) {
     const result = new Array(p1.length + p2.length - 1).fill(0);
     for (let i = 0; i < p1.length; i++) {
@@ -151,13 +145,12 @@ function buildExprString(coeffsAscending) {
 }
 
 function buildAcceptedForms(roots) {
-    // Distinct roots only — duplicates from multiplicity don't need separate answer slots
     const distinct = [...new Set(roots.map(r => Number.isInteger(r) ? r : parseFloat(r.toFixed(4))))];
     return { canonical: distinct.sort((a, b) => a - b) };
 }
 
 function estimateDifficulty(degree, roots, coeffs) {
-    let score = 1000 + degree * 150; // higher degree = harder baseline
+    let score = 1000 + degree * 150;
     const hasFraction = roots.some(r => r.denom !== 1);
     const hasRepeat = new Set(roots.map(r => `${r.num}/${r.denom}`)).size < roots.length;
     if (hasFraction) score += 100;
@@ -173,4 +166,4 @@ console.log(question.template_expr);
 console.time();
 const answer = await quadraticEquation(question.template_expr);
 console.timeEnd();
-console.log('Solution:', answer.roots);  // [-3, -1, 1, 3]
+console.log('Solution:', answer.roots);

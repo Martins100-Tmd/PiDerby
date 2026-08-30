@@ -1,17 +1,8 @@
-/**
- * Generates a "guess the next value" sequence question. Same underlying
- * principle as the polynomial/simultaneous-equation generators: the rule is
- * picked FIRST, the sequence is derived exactly from it, so the "next value"
- * is never ambiguous *given the rule you generated it from* — the real risk
- * here isn't wrong math, it's that a short sequence can look like it fits
- * more than one reasonable rule. More on that below the code.
- */
-
 const SEQUENCE_TYPES = ['arithmetic', 'geometric', 'quadratic', 'fibonacci_like', 'geometric_alternating'];
 
 function generateSequenceQuestion({
-    type = null,              // null = pick randomly from SEQUENCE_TYPES
-    termsShown = 5,           // how many terms the user sees before guessing
+    type = null,
+    termsShown = 5,
     minVal = -10,
     maxVal = 10
 } = {}) {
@@ -38,7 +29,6 @@ function generateSequenceQuestion({
             break;
         }
         case 'quadratic': {
-            // second differences constant -> a*n^2 + b*n + c
             const a = randNonZero(-3, 3);
             const b = randInt(-5, 5);
             const c = randInt(minVal, maxVal);
@@ -66,7 +56,6 @@ function generateSequenceQuestion({
         }
     }
 
-    // Need enough terms to make the rule reasonably unambiguous — see note below.
     const minTermsForType = { arithmetic: 4, geometric: 4, quadratic: 5, fibonacci_like: 5, geometric_alternating: 5 };
     const shown = Math.max(termsShown, minTermsForType[chosenType]);
 
@@ -79,7 +68,7 @@ function generateSequenceQuestion({
         prompt: `What is the next number in the sequence: ${sequence.join(', ')}, ?`,
         sequence,
         correct_answer: nextValue,
-        rule: ruleDescription,           // internal/debug only — never show to the user
+        rule: ruleDescription,
         difficulty_hint: estimateDifficulty(chosenType, sequence)
     };
 }
@@ -92,8 +81,7 @@ function estimateDifficulty(type, sequence) {
     return score;
 }
 
-// Examples
 console.log(generateSequenceQuestion({ type: 'arithmetic' }));
 console.log(generateSequenceQuestion({ type: 'quadratic' }));
 console.log(generateSequenceQuestion({ type: 'fibonacci_like' }));
-console.log(generateSequenceQuestion()); // random type
+console.log(generateSequenceQuestion());

@@ -1,4 +1,4 @@
-const VARS = ['x', 'y', 'z', 'w']; // supports up to 4 unknowns
+const VARS = ['x', 'y', 'z', 'w'];
 
 /**
  * Generates a system of n linear equations in n unknowns (n = 2, 3, or 4),
@@ -28,7 +28,6 @@ function generateSimultaneousEquations({
         return v;
     };
 
-    // 1. Pick the solution vector first (each value possibly fractional)
     const solution = [];
     for (let i = 0; i < size; i++) {
         if (allowFractionalSolution && Math.random() < 0.3) {
@@ -40,8 +39,6 @@ function generateSimultaneousEquations({
         }
     }
 
-    // 2. Pick an n x n coefficient matrix with non-zero determinant
-    //    (guarantees a unique solution — no dependent/inconsistent equations)
     let matrix, det;
     let attempts = 0;
     do {
@@ -53,12 +50,10 @@ function generateSimultaneousEquations({
         if (attempts > 200) throw new Error('failed to find invertible matrix — widen maxCoeff or retry');
     } while (det === 0);
 
-    // 3. Derive constants (RHS) from chosen solution — guarantees exactness
     const rawConstants = matrix.map(row =>
         row.reduce((sum, coef, j) => sum + coef * solution[j], 0)
     );
 
-    // 4. Scale each equation to clear any fractional constant
     const equations = matrix.map((row, i) => scaleToIntegers(row, rawConstants[i]));
 
     return {
@@ -70,7 +65,6 @@ function generateSimultaneousEquations({
     };
 }
 
-// Recursive cofactor expansion — fine for n <= 4
 function determinant(matrix) {
     const n = matrix.length;
     if (n === 1) return matrix[0][0];
@@ -87,9 +81,6 @@ function determinant(matrix) {
     return det;
 }
 
-// Scales a row's coefficients + constant up by the smallest integer that
-// clears any fractional constant (constants are the only place fractions
-// can appear, since coefficients are chosen as integers)
 function scaleToIntegers(coeffs, constant) {
     if (Number.isInteger(constant)) return { coeffs, constant };
     const denom = findDenominator(constant);
@@ -120,7 +111,7 @@ function formatLinearEq(coeffs, constant) {
 }
 
 function estimateDifficulty(equations, solution) {
-    let score = 1000 + (equations.length - 1) * 200; // 3x3/4x4 harder baseline than 2x2
+    let score = 1000 + (equations.length - 1) * 200;
     if (solution.some(v => !Number.isInteger(v))) score += 130;
     const maxAbsCoeff = Math.max(...equations.flatMap(eq => eq.coeffs.map(Math.abs)));
     if (maxAbsCoeff > 8) score += 40;
@@ -129,7 +120,7 @@ function estimateDifficulty(equations, solution) {
     return score;
 }
 
-let rand = Math.floor(Math.random()*4)+1;
-rand = rand<2?2:rand;
-rand = rand >4 ?4:rand;
+let rand = Math.floor(Math.random() * 4) + 1;
+rand = rand < 2 ? 2 : rand;
+rand = rand > 4 ? 4 : rand;
 console.log(generateSimultaneousEquations({ size: rand, allowFractionalSolution: true }));
